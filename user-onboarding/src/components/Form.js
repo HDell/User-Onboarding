@@ -3,8 +3,14 @@ import { withFormik, Form, Field } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
+// let data = [];
 
-const MyForm = ({values, errors, touched, isSubmitting}) => {
+const MyForm = ({
+    values,
+    errors,
+    touched,
+    isSubmitting
+}) => {
     ////Old Way
     // const [user, setUser] = useState({ username: "", email: "", password: "" });
     //
@@ -20,10 +26,14 @@ const MyForm = ({values, errors, touched, isSubmitting}) => {
     //     console.log(user.password);
     // };
 
-    const [user, setUser] = useState([]);
+    const [users, setUsers] = useState([]);
     useEffect(() => {
-        if (values.termsOfService) {
-            setUser(user => [...user, values]);
+        console.log("Pre Push:", users);
+        if (!users.map(item => item.email).includes(values.email) && !users.map(item => item.username).includes(values.username) && values.termsOfService) {
+            setUsers([...users, values]);
+            console.log("Post Push:", users);
+        } else {
+            console.log("User already exists.");
         }
     }, [isSubmitting]);
     return (
@@ -32,7 +42,7 @@ const MyForm = ({values, errors, touched, isSubmitting}) => {
                 <label>
                     Username
                     <br/>
-                    {errors.username && <p>{errors.username}</p>}
+                    {touched.username && errors.username && <p>{errors.username}</p>}
                     <Field type="text" name="username" placeholder="Username" />
                 </label>
                 <div>
@@ -53,12 +63,22 @@ const MyForm = ({values, errors, touched, isSubmitting}) => {
                 </div>
                 <div>
                     <label>
-                        {errors.termsOfService && <p>{errors.termsOfService}</p>}
+                        {touched.termsOfService && errors.termsOfService && <p>{errors.termsOfService}</p>}
                         <Field type='checkbox' name='termsOfService' checked={values.termsOfService}/>
                         Accept Terms of Service
                     </label>
                 </div>
-                <button type="submit">Submit!</button> {/* disabled={isSubmitting} */}
+                <button disabled={isSubmitting} type="submit">Submit!</button>
+                <div>
+                    {users.map(user => {
+                        return (
+                            <div>
+                                <h3>{user.username}</h3>
+                                <p>{user.email}</p>
+                            </div>
+                        )
+                    })}
+                </div>
             </Form>
         </div>
     );
@@ -71,7 +91,6 @@ const FormikForm = withFormik({
             email: email || "",
             password: password || "",
             termsOfService: termsOfService || false
-
         };
     },
 
@@ -89,21 +108,25 @@ const FormikForm = withFormik({
     }),
 
     handleSubmit(values, {resetForm, setErrors, setSubmitting}) {
-        if (values.email === "waffle@syrup.com") {
-            setErrors({ email: "That email is already taken" });
-        } else {
-            axios
-                .post("https://reqres.in/api/users", values)
-                .then(res => {
-                    console.log(res.data);
-                    resetForm();
-                    setSubmitting(res.data);
-                })
-                .catch(err => {
-                    console.log(err);
-                    setSubmitting(false);
-                });
-        }
+        setTimeout(() => {
+            if (values.email === "waffle@syrup.com") {
+                setErrors({ email: "That email is already taken" });
+                resetForm();
+            } else {
+                axios
+                    .post("https://reqres.in/api/users", values)
+                    .then(res => {
+                        console.log("axios:", res.data);
+                        resetForm();
+                        // data.push(res.data);
+                        // console.log("data:", data);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
+            }
+        }, 1000);
+        setSubmitting(false);
     }
 })(MyForm);
 
